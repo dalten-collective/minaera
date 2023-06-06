@@ -4,6 +4,8 @@
 ::  Ingests local groups events, sanitizes them, and submits them to %minaera graph
 ::
 ::
+::  +on-agent arm listens for reacts to posts
+::
 /-  *minaera, chat, *alfie-events-0
 /+  verb, dbug, default-agent
 |%
@@ -91,45 +93,50 @@
       ?+    p.cage.sign  `this
           %chat-action-0
         =/  =action:chat  !<(action:chat q.cage.sign)
-        :: ~&  >  action
         ?>  ?=([%writs *] q.q.action)
         =/  target=[to=@p post=@da]  p.p.q.q.action
         =/  =delta:writs:chat  q.p.q.q.action
         ~&  >  delta
-        ?.  =(our.bowl to.target)
+        ?:  =(our.bowl to.target)
           `this
         ?+    delta  !!
             [%add-feel *]
           :_  this
-          =-  ?~  eq
+          =-  ?~  ar
                 ~
-              =+  [%add-edge %groups (need eq)]
+              =+  [%add-edge %groups dap.bowl (need ar)]
               :~  :*  %pass  /minaera/action
                       %agent  [our.bowl %minaera]
                       %poke  %aera-action  !>(-)
               ==  ==
-          ^=  eq
-          ^-  (unit edge-query)
+          ^=  ar
+          ^-  (unit aera-row)
           ?.  =(q.delta `knot`':+1:')
             ?.  =(q.delta `knot`':-1:')
               ~
             %-  some
-            :*  p.q.action
+            :*  `@`post.target 
+                p.q.action
+                our.bowl
                 to.target 
                 `knot`':-1:'
                 tag=%negative-react
                 description=%'Negative react: thumbs down.'
                 app-tag=%chat-action-0
                 event-version=%0
+                ~
             ==
           %-  some
-          :*  p.q.action
+          :*  `@`post.target 
+              p.q.action
+              our.bowl
               to.target
               `knot`':+1:'
-              tag=%negative-react
-              description=%'Negative react: thumbs down.'
+              tag=%positive-react
+              description=%'Positive react: thumbs up.'
               app-tag=%chat-action-0
               event-version=%0
+              ~
           ==
           ::
             [%del-feel *]

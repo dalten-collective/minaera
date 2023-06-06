@@ -11,7 +11,7 @@
 ::
 +$  versioned-state  $%(state-0)
 ::
-+$  state-0  [%0 graph=(map @tas [count=@ud =database:n])]
++$  state-0  [%0 graph=(map @tas database:n)]
 ::
 ::
 ::  boilerplate
@@ -67,16 +67,19 @@
     =/  act  !<(aera-action vase)
     ?+    -.act  !!
         %init-graph
-      ?<  (~(has by graph.state) app.act)
+      =?  graph.state  !(~(has by graph.state) app.act)
+        %+  ~(put by graph.state)
+          app.act
+        *database:n
+      =/  app-db=database:n  (~(got by graph.state) app.act)
       =.  graph.state
         %+  ~(put by graph.state)
           app.act
-        :-  count=0
         =-  +.- 
-        %+  ~(q db:n *database:n)
+        %+  ~(q db:n app-db)
             app.act
           :+  %add-table
-            dap.bowl
+            feed.act
           :*  schema=(make-schema:n aera-schema)
               primary-key=~[%id]
               indices=(make-indices:n [~[%id] primary=& autoincrement=`1 unique=& clustered=|]~)
@@ -85,31 +88,18 @@
       `this
       ::
         %add-edge
-      =/  eq  edge-query.act
       ?.  (~(has by graph.state) app.act)
         ~|("%minaera: initialize database for {<app.act>} first!" !!)
-      =+  [count database]=(~(got by graph.state) app.act)
+      =+  database=(~(got by graph.state) app.act)
       :-  ~
       %=    this
           graph.state
         %+  ~(put by graph.state)
           app.act
-        :-  +(count)
         =<  +
         %+  ~(q db:n database)
           app.act
-        =/  row=aera-row
-        :~  count
-            time.eq
-            from.eq
-            our.bowl
-            what.eq
-            tag.eq
-            description.eq
-            app-tag.eq
-            event-version.eq
-        ==
-        [%insert dap.bowl ~[row]]
+        [%insert feed.act ~[aera-row.act]]
       ==
     ==
   ==
