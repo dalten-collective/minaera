@@ -555,7 +555,8 @@
   ++  insert
     |=  [rows=(list row) update=?]
     ^+  table
-    ::  ~&  >  "%nectar: performing insert/update"
+    ~&  >  "%nectar: performing insert/update"
+    ~&  >  rows
     ::  ~>  %bout
     =.  records.table
       %-  ~(rut by records.table)

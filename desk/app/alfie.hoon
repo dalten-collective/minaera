@@ -20,6 +20,11 @@
   |=  =ship
   [%pass /chat/updates %agent [ship %chat] %watch /ui]
 ::
+::
+++  minaera-init-card
+|=  =ship
+[%pass /minaera/action %agent [ship %minaera] %poke %aera-action !>([%init-table %groups %alfie])]
+::
 ::  boilerplate
 ::
 +$  card  card:agent:gall
@@ -51,7 +56,7 @@
   ^-  (quip card _this)
   ~>  %bout.[0 '%alfie +on-init']
   :_  this
-  ~[(chat-subscribe-card our.bowl)]
+  ~[(chat-subscribe-card our.bowl) (minaera-init-card our.bowl)]
 ::
 ++  on-save
   ^-  vase
