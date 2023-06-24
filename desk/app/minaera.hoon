@@ -85,7 +85,9 @@
   ^-  (quip card _this)
   ?+    mark  !!
       %aera-action
+    ~&  >  vase
     =/  act  !<(aera-action vase)
+    ~&  >  act
     ?+    -.act  !!
         %init-table
       =/  new-table=table:n
@@ -103,6 +105,7 @@
       [cards this]
       ::
         %add-edge
+      ~&  >  'adding edge'
       ?.  (~(has by graph.state) [app.act feed.act])
         ~|("%minaera: initialize table for {<app.act>}, {<feed.act>} first!" !!)
       =.  graph.state

@@ -6,7 +6,7 @@
 ::
 ::  +on-agent arm listens for reacts to posts
 ::
-/-  *minaera, chat, *alfie-events-0
+/-  *minaera, chat
 /+  verb, dbug, default-agent
 |%
 ::

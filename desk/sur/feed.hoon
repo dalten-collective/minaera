@@ -1,5 +1,12 @@
-/-  *minaera
+/-  m=minaera
 /+  n=nectar
+=>
+|%
++$  feed-action  
+  $%  [%init =table:n] 
+      [%add aera-rows=(list aera-row:m)]
+  ==
+--
 |%
 ++  name  %feed
 +$  rock  table:n

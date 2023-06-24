@@ -1,4 +1,3 @@
-/-  alfie=alfie-events-0
 /+  *mip, *nectar
 |%
 ::
@@ -33,9 +32,5 @@
   $%  [%init-table app=term feed=term]
       [%add-edge app=term feed=term =aera-row]
       [%placeholder ~]
-  ==
-+$  feed-action  
-  $%  [%init =table] 
-      [%add aera-rows=(list aera-row)]
   ==
 --
