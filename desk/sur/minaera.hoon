@@ -31,6 +31,7 @@
 +$  aera-action
   $%  [%init-table app=term feed=term]
       [%add-edge app=term feed=term =aera-row]
+      [%del-edge app=term feed=term id=@]
       [%placeholder ~]
   ==
 --

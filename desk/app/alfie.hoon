@@ -145,7 +145,11 @@
           ==
           ::
             [%del-feel *]
-          `this
+          :_  this
+          :~  :*  %pass  /minaera/action
+                  %agent  [our.bowl %minaera]
+                  %poke  %aera-action  !>(`aera-action`[%del-edge %groups dap.bowl post.target])
+          ==  ==
         ==
       ==
     ==
