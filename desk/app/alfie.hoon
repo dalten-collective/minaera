@@ -101,12 +101,17 @@
         ?>  ?=([%writs *] q.q.action)
         =/  target=[to=@p post=@da]  p.p.q.q.action
         =/  =delta:writs:chat  q.p.q.q.action
+        ~&  >  target
         ~&  >  delta
         ?:  =(our.bowl to.target)
           `this
+        ::
+        ::  If we aren't the one sending the react, ignore.
         ?+    delta  !!
             [%add-feel *]
           :_  this
+          ?:  !=(our.bowl p.delta)
+            ~
           =-  ?~  ar
                 ~
               =+  [%add-edge %groups dap.bowl (need ar)]
@@ -146,6 +151,8 @@
           ::
             [%del-feel *]
           :_  this
+          ?:  !=(our.bowl p.delta)
+            ~
           :~  :*  %pass  /minaera/action
                   %agent  [our.bowl %minaera]
                   %poke  %aera-action  !>(`aera-action`[%del-edge %groups dap.bowl post.target])

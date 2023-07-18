@@ -76,9 +76,7 @@
   ^-  (quip card _this)
   ?+    mark  !!
       %aera-action
-    ~&  >  vase
     =/  act  !<(aera-action vase)
-    ~&  >  act
     ?+    -.act  !!
         %init-table
       =/  new-table=table:n
@@ -153,25 +151,22 @@
 ++  on-agent
   |=  [=wire sign=sign:agent:gall]
   ^-  (quip card _this)
-  ?+    -.sign  `this
-      %poke-ack
-    ?~  p.sign  `this
-    %-  (slog u.p.sign)
-    ?+    wire  `this
-        [~ %sss %on-rock @ @ @ %feed %minaera @ @ ~]
-      =.  sub-feed  (chit:da-feed |3:wire sign)
-      ~&  >  "sub-feed is: {<read:da-feed>}"
-      `this
-    ::
-        [~ %sss %scry-request @ @ @ %feed %minaera @ @ ~]
-      =^  cards  sub-feed  (tell:da-feed |3:wire sign)
-      [cards this]
-    ::
-        [~ %sss %scry-response @ @ @ %feed %minaera @ @ ~]
-      =^  cards  pub-feed  (tell:du-feed |3:wire sign)
-      ~&  >  "pub-feed is: {<read:du-feed>}"
-      [cards this]
-    ==
+  ?.  =(%poke-ack -.sign)
+  ~&  >  minaera+'bad poke'  `this
+  ?+    wire  `this
+      [~ %sss %on-rock @ @ @ %feed %minaera @ @ ~]
+    =.  sub-feed  (chit:da-feed |3:wire sign)
+    ::  ~&  >  "sub-feed is: {<read:da-feed>}"
+    `this
+  ::
+      [~ %sss %scry-request @ @ @ %feed %minaera @ @ ~]
+    =^  cards  sub-feed  (tell:da-feed |3:wire sign)
+    [cards this]
+  ::
+      [~ %sss %scry-response @ @ @ %feed %minaera @ @ ~]
+    =^  cards  pub-feed  (tell:du-feed |3:wire sign)
+    :: ~&  >  "pub-feed is: {<read:du-feed>}"
+    [cards this]
   ==
 ::
 ++  on-watch
