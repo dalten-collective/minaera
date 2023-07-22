@@ -95,13 +95,14 @@
       =+  wav=(need wave.msg)
       =/  act=update:qu  q.act.wav
       =/  pat=[@p term]  p.act.wav
+      =/  m  (~(get by +.sub-boards) [-.pat %quorum [%quorum %updates (scot %p -.pat) +.pat ~]])
+      =/  flow=(unit [aeon=@ stale=_| fail=_| =rock:boards])
+        ?~(m ~ (need m))
+      ?~  flow  `this
+      =/  board=rock:boards  rock:(need flow)
       ?+    -.act  `this
           %vote
         =/  hash=@uw  (shax (cat 3 (cat 3 +.pat -.pat) post-id.act))
-        =/  m  (~(get by +.sub-boards) [-.pat %quorum [%quorum %updates (scot %p -.pat) +.pat ~]])
-        =/  flow=(unit [aeon=@ stale=_| fail=_| =rock:boards])
-          ?~(m ~ (need m))
-        ?~  flow  `this
         =/  board=rock:boards  rock:(need flow)
         =/  =post:qu  (~(entry via:qu board) %posts post-id.act)
         =/  author=@p  (author:poast:qu post)
@@ -116,11 +117,6 @@
         ?~  best-id.act
           `this
         =/  hash=@uw  (shax (cat 3 (cat 3 +.pat -.pat) post-id.act))
-        =/  m  (~(get by +.sub-boards) [-.pat %quorum [%quorum %updates (scot %p -.pat) +.pat ~]])
-        =/  flow=(unit [aeon=@ stale=_| fail=_| =rock:boards])
-          ?~(m ~ (need m))
-        ?~  flow  `this
-        =/  board=rock:boards  rock:(need flow)
         =/  top=post:qu  thread:(~(threadi via:qu board) post-id.act) 
         =/  best=@  best-id:(need thread.top)
         =/  answer=post:qu  (~(entry via:qu board) %posts best)
