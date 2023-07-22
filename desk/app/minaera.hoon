@@ -80,11 +80,11 @@
     ?+    -.act  !!
         %init-table
       =/  new-table=table:n
-          :*  schema=(make-schema:n aera-schema)
-              primary-key=~[%id]
-              indices=(make-indices:n [~[%id] primary=& autoincrement=~ unique=& clustered=|]~)
-              records=~
-          ==
+        :*  schema=(make-schema:n aera-schema)
+            primary-key=~[%id]
+            indices=(make-indices:n [~[%id] primary=& autoincrement=~ unique=& clustered=|]~)
+            records=~
+        ==
       =?  graph.state  !(~(has by graph.state) app.act^feed.act) 
         =<  +
         %+  ~(q db:n graph.state)
