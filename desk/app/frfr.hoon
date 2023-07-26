@@ -64,6 +64,7 @@ the confidence will be 1.
     min=%ninf
     max=%inf
 ==
+::
 --
 =/  sub-feed  (mk-subs feed ,[%feed %minaera @ @ ~])
 =/  sub-service  (mk-subs service ,[%service *])
@@ -311,7 +312,46 @@ the confidence will be 1.
   ?~  -
     ~
   =/  =table:n  (need -) 
-  =/  negs  (~(get-rows tab:n (~(select tab:n table) ~ [%s %tag [%.y [%eq %negative-react]]])) ~)
-  =/  pozz  (~(get-rows tab:n (~(select tab:n table) ~ [%s %tag [%.y [%eq %positive-react]]])) ~)
+  =/  pozz  (~(get-rows tab:n (~(select tab:n table) ~ (pos-cond target))) ~)
+  ~&  pozz+pozz
+  =/  negs  (~(get-rows tab:n (~(select tab:n table) ~ (neg-cond target))) ~)
+  ~&  negs+negs
   `(add:rs (mul:rs .-1.0 (sun:rs (lent negs))) (sun:rs (lent pozz)))
+::
+++  pos-reacts  (silt `(list knot)`~[':+1:' ':heart:' ':heart_eyes:' ':clap:' ':100:' ':tada:'])
+::
+++  neg-reacts  (silt `(list knot)`~[':-1:'])
+::
+++  neg-cond
+|=  target=ship
+^-  condition:n
+:*  %and
+    [%s %tag [%& %eq %react]]
+    :+  %and
+      [%s %to [%& %eq target]] 
+    :*  %s 
+        %what 
+        :-  %|
+        |=  a=value:n 
+        ?<  |(?=((unit @) a) ?=(^ a))
+        (~(has in neg-reacts) a)
+    ==
+==
+::
+++  pos-cond
+|=  target=ship
+^-  condition:n
+:*  %and
+    [%s %tag [%& %eq %react]]
+    :+  %and
+      [%s %to [%& %eq target]] 
+    :*  %s 
+        %what 
+        :-  %|
+        |=  a=value:n 
+        ?<  |(?=((unit @) a) ?=(^ a))
+        (~(has in pos-reacts) a)
+    ==
+==
+
 --

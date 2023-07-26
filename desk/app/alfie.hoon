@@ -25,6 +25,9 @@
 |=  =ship
 [%pass /minaera/action %agent [ship %minaera] %poke %aera-action !>([%init-table %groups %alfie])]
 ::
+::
+::++  pos-reacts  (silt `(list knot)`~[':+1:' ':heart:' ':heart_eyes:' ':clap:' ':100:' ':tada:'])
+::++  neg-reacts  (silt `(list knot)`~[':-1:' ':'])
 ::  boilerplate
 ::
 +$  card  card:agent:gall
@@ -112,38 +115,19 @@
           :_  this
           ?:  !=(our.bowl p.delta)
             ~
-          =-  ?~  ar
-                ~
-              =+  [%add-edge %groups dap.bowl (need ar)]
-              :~  :*  %pass  /minaera/action
-                      %agent  [our.bowl %minaera]
-                      %poke  %aera-action  !>(-)
+          =-  :~  :*  %pass  /minaera/action  %agent
+                      [our.bowl %minaera]  %poke
+                      %aera-action  !>([%add-edge %groups dap.bowl ar])
               ==  ==
           ^=  ar
-          ^-  (unit aera-row)
-          ?.  =(q.delta `knot`':+1:')
-            ?.  =(q.delta `knot`':-1:')
-              ~
-            %-  some
-            :*  `@`post.target 
-                p.q.action
-                our.bowl
-                to.target 
-                `knot`':-1:'
-                tag=%negative-react
-                description=%'Negative react: thumbs down.'
-                app-tag=%chat-action-0
-                event-version=%0
-                ~
-            ==
-          %-  some
-          :*  `@`post.target 
-              p.q.action
-              our.bowl
-              to.target
-              `knot`':+1:'
-              tag=%positive-react
-              description=%'Positive react: thumbs up.'
+          ^-  aera-row
+          :*  id=`@`post.target 
+              timestamp=p.q.action
+              from=our.bowl
+              to=to.target 
+              what=q.delta 
+              tag=%react
+              description='Emoji react from %talk'
               app-tag=%chat-action-0
               event-version=%0
               ~
