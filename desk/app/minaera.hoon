@@ -5,7 +5,6 @@
 ::
 ::  holds database of tables,
 ::  holds sss publications over each table,
-::  handles permissions over each table.
 ::  
 |%
 ::

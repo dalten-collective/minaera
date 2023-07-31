@@ -6,26 +6,29 @@
 ::  
 ::  Description of Score:
 :: 
-::  The score is: confidence(%beer)*sum(feels)
+::  The score is: confidence(%beer)*(sum_me(feels)+0.5*sum_peers(feels))
 ::  
-::  The confidence comes from %beer while the sum of feels is the positive
-::  reacts minus the number of negative reacts collected by %alfie.
+::  The confidence comes from %beer while the sum of feels consists of:
+::  the positive reacts minus the number of negative reacts collected 
+::  by %alfie. 
 ::
-::  The confidence is set to 1 if the %beer score is %1. It is 3/4 
-::  if neither you nor your neighbors have a score for a given ship.
-::  It is 1/2 if your %beer score is %0 or one of your neighbors has 
-::  given the ship a beer score of %0.
+::  If there is a first hand opinion of the person, if it is %1, then
+::  the confidence is 1. Likewise if it is %0, then the confidence
+::  is 0.
 ::
-::  If there is a first hand opinion of the person, then my personal 
-::  %beer score will be used to calculate the confidence. If I don't 
-::  have a first hand opinion, then I will poll my trusted peers and 
-::  take the max of their score. If none of my peers has a first hand
-::  opinion of the ship, the confidence will be 1/2.
+::  If I don't have a first hand opinion, then I will poll my trusted 
+::  peers and take the max of their score. 
+::
+::  If none of my peers has a first hand opinion of the ship, the confidence 
+::  will be 3/4 to represent uncertainty.
+::
+::  If none of my peers attests that the ship is real (%1) and at least one of 
+::  my peers attests that the ship is definitely fake (%0) the confidence goes to 0. 
 ::
 ::  .^((set @p) %gx /(scot %p our)/pals/(scot %da now)/mutuals/noun)
 ::
 /-  *minaera, feed, service
-/+  verb, dbug, default-agent, *sss, n=nectar
+/+  verb, dbug, default-agent, *sss, n=nectar, *mip
 |%
 ::
 +$  versioned-state  $%(state-0)
@@ -39,7 +42,7 @@
 +$  state-0
   $:  %0
       neighbors=(set @p)
-      scores=(map @p score)
+      scores=(mip @p @ score)
   ==
 ::
 +$  frfr-action
@@ -56,19 +59,24 @@
 ++  info-card
 =/  desc=@t
 '''
-The score is: confidence*sum(feels)
+The score is: confidence(%beer)*(sum_me(feels)+0.5*sum_peers(feels))
 
-The confidence comes from %beer while the sum of feels is the positive
-reacts minus the number of negative reacts collected by %alfie.
+The confidence comes from %beer while the sum of feels consists of:
+the positive reacts minus the number of negative reacts collected 
+by %alfie. 
 
-The confidence is set to 1 if the %beer score is %1. It is 1/2 if 
-the beer score is %0 or neither you nor your neighbors have a score 
-for a given ship.
+If there is a first hand opinion of the person, if it is %1, then
+the confidence is 1. Likewise if it is %0, then the confidence
+is 0.
 
-If there is a first hand opinion of the person, then my personal %beer 
-score will be used to calculate the confidence. If I don't have a first
-hand opinion, then I will poll my trusted peers and if at least one of
-them has a score of %1 for the target ship, the confidence will be 1.
+If I don't have a first hand opinion, then I will poll my trusted 
+peers and take the max of their score. 
+
+If none of my peers has a first hand opinion of the ship, the confidence 
+will be 3/4 to represent uncertainty.
+
+If none of my peers attests that the ship is real (%1) and at least one of 
+my peers attests that the ship is definitely fake (%0) the confidence goes to 0.
 '''
 :*  desc=desc
     type=%continuous
@@ -96,15 +104,42 @@ them has a score of %1 for the target ship, the confidence will be 1.
   ^-  (list card)
   :~  :*  %pass  /service/beer
           %agent  [me %frfr]
-          %poke  %surf-service  !>([ship [%service %beer ~]])
+          %poke  %quit-service  !>([ship [%service %beer ~]])
       ==
   ::
       :*  %pass  /feed/minaera/groups/alfie
           %agent  [me %frfr]
-          %poke  %surf-feed  !>([ship [%feed %minaera %groups %alfie ~]])
+          %poke  %quit-feed  !>([ship [%feed %minaera %groups %alfie ~]])
       ==
   ==
+::
+++  unique-time
+  |=  [=time =ship m=(mip @p @ score)]
+  ^-  @
+  =/  unix-ms=@
+    (unm:chrono:userlib time)
+  |-
+  ?.  (~(has bi m) ship unix-ms)
+    unix-ms
+  $(time (add unix-ms 1))
+::
+++  hash-score
+  |=  [=score]
+  ^-  @uv
+  %-  shax
+  %+  add
+    ;:  (cury cat 3)
+        ?~(from.beer.score ~ (need from.beer.score))
+        weight.beer.score
+    ==
+  %+  roll
+    %+  turn
+      ~(tap by alfie.score)
+    |=  [b=@p c=@ud d=@ud]
+    ;:((cury cat 3) b c d)
+  add
 --
+::
 =/  sub-feed  (mk-subs feed ,[%feed %minaera @ @ ~])
 =/  sub-service  (mk-subs service ,[%service *])
 =/  pub-service  (mk-pubs service ,[%service *])
@@ -191,8 +226,9 @@ them has a score of %1 for the target ship, the confidence will be 1.
       :-  ~
       %=    this
           scores.state
-        %+  ~(put by scores.state)
-          ship.act 
+        %^    ~(put bi scores.state)
+            ship.act 
+          (unique-time now.bowl ship.act scores.state)  
         :+  (mul:rs weight.con (calc-sum:hc (need sum)))
           con
         (need sum)
@@ -203,7 +239,8 @@ them has a score of %1 for the target ship, the confidence will be 1.
       this(neighbors.state (~(put in neighbors.state) ship.act))
     ::
         %del-edge
-      `this(neighbors.state (~(del in neighbors.state) ship.act))
+      :-  (quit-surf our.bowl ship.act)
+      this(neighbors.state (~(del in neighbors.state) ship.act))
     ==
     ::
       %surf-feed
@@ -216,6 +253,16 @@ them has a score of %1 for the target ship, the confidence will be 1.
       (surf:da-service !<(@p (slot 2 vase)) %beer !<([%service %beer ~] (slot 3 vase)))
     ~&  >  "sub-service is: {<read:da-service>}"
     [cards this]
+  ::
+      %quit-feed
+    =.  sub-feed
+      (quit:da-feed !<(@p (slot 2 vase)) %minaera !<([%feed %minaera @ @ ~] (slot 3 vase)))
+    `this
+  ::
+      %quit-service
+    =.  sub-service
+      (quit:da-service !<(@p (slot 2 vase)) %beer !<([%service %beer ~] (slot 3 vase)))
+    `this
   ::
       %sss-feed
     =/  res  !<(into:da-feed (fled vase))
@@ -249,7 +296,13 @@ them has a score of %1 for the target ship, the confidence will be 1.
   ?+    path  `~
       [%x %score @ ~]
     =/  =ship  (slav %p -.+.+.path)
-    ``[%noun !>((~(get by scores.state) ship))]
+    ``[%noun !>((get-latest ship scores.state))]
+  ::
+      [%x %scores @ ~]
+    =/  =ship  (slav %p -.+.+.path)
+    ?.  (~(has by scores.state) ship)
+      ``[%noun !>(~)]
+    ``[%noun !>(~(tap by (~(got by scores.state) ship)))]
   ::
       [%x %card ~]
     ``[%noun !>(info-card)]
@@ -299,7 +352,7 @@ them has a score of %1 for the target ship, the confidence will be 1.
   ::  Try grabbing local weight first
   ::
   =/  local-weight  (get-weights our.bowl ship)
-  ::  If local-weight is .0, ask your peers
+  ::  If local-weight is empty, ask your peers
   ::
   ?^  local-weight
     local-weight
@@ -331,7 +384,7 @@ them has a score of %1 for the target ship, the confidence will be 1.
   ?.  (~(has by scores) target)
     ~
   ?:  =(%0 (~(got by scores) target))
-    `[host .0.5]
+    `[host .0]
   `[host .1]
 ::
 ++  grab-scores-beer
@@ -353,7 +406,6 @@ them has a score of %1 for the target ship, the confidence will be 1.
     %+  turn
       (snoc ~(tap in neighbors) our.bowl)
     |=  a=@p
-    ~&  >  get+a
     =+  (grab-table-alfie a)
     ?~  -
       ~
@@ -385,7 +437,6 @@ them has a score of %1 for the target ship, the confidence will be 1.
   ?~  local-map
     ~|('%frfr: %alfie has not been initialized yet' ~) 
   =/  flow=(unit [aeon=@ stale=_| fail=_| =rock:feed])  (need local-map)
-  ~&  grab-table+[ship flow]
   ?~  flow
     ~
   `rock:(need flow)
@@ -439,5 +490,17 @@ them has a score of %1 for the target ship, the confidence will be 1.
         (~(has in pos-reacts) a)
     ==
 ==
-
+::
+++  get-latest
+|=  [ship=@p m=(mip @p @ score)]
+^-  (unit score)
+?.  (~(has by m) ship)
+  ~
+=;  latest=score
+  `latest
+=<  +.-
+  %+  sort
+    ~(tap by (~(got by scores.state) ship))
+  |=  [a=[@ score] b=[@ score]]
+  (lth -.a -.b)
 --
