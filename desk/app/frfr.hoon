@@ -181,7 +181,7 @@ them has a score of %1 for the target ship, the confidence will be 1.
         %compute
       =/  confidence=(unit [from=@p weight=@rs])
         (compute-weight:hc ship.act neighbors.state)
-      =/  sum  (get-sum-neighbors our.bowl ship.act neighbors.state)
+      =/  sum  (get-sum-neighbors:hc ship.act neighbors.state)
       ?~  sum
         ~|('%frfr: No information on {<ship.act>} available in your graph' `this)
       =/  con=[from=(unit @p) weight=@rs]
@@ -193,7 +193,7 @@ them has a score of %1 for the target ship, the confidence will be 1.
           scores.state
         %+  ~(put by scores.state)
           ship.act 
-        :+  (mul:rs weight.con (calc-sum (need sum)))
+        :+  (mul:rs weight.con (calc-sum:hc (need sum)))
           con
         (need sum)
       ==
@@ -301,7 +301,7 @@ them has a score of %1 for the target ship, the confidence will be 1.
   =/  local-weight  (get-weights our.bowl ship)
   ::  If local-weight is .0, ask your peers
   ::
-  ?.  =(.0 +.local-weight)
+  ?^  local-weight
     local-weight
   =/  b=(list [@p @rs])
     %+  sort
@@ -310,7 +310,7 @@ them has a score of %1 for the target ship, the confidence will be 1.
       %+  turn
         ~(tap in neighbors)
       |=  e=@p
-      (get-weights our.bowl e)
+      (get-weights e ship)
     |=  [a=[* weight=@rs] b=[* weight=@rs]]
     (gth weight.a weight.b)
   ?~(b ~ `i.b)
@@ -346,13 +346,14 @@ them has a score of %1 for the target ship, the confidence will be 1.
   `rock:(need flow) 
 ::
 ++  get-sum-neighbors
-  |=  [host=ship target=ship neighbors=(set @p)]
+  |=  [target=ship neighbors=(set @p)]
   ^-  (unit map=(map @p [pozz=@ud negs=@ud]))
   =/  tables=(list [@p table:n])
     %-  neede
     %+  turn
-      (snoc ~(tap in neighbors) host)
+      (snoc ~(tap in neighbors) our.bowl)
     |=  a=@p
+    ~&  >  get+a
     =+  (grab-table-alfie a)
     ?~  -
       ~
@@ -384,6 +385,7 @@ them has a score of %1 for the target ship, the confidence will be 1.
   ?~  local-map
     ~|('%frfr: %alfie has not been initialized yet' ~) 
   =/  flow=(unit [aeon=@ stale=_| fail=_| =rock:feed])  (need local-map)
+  ~&  grab-table+[ship flow]
   ?~  flow
     ~
   `rock:(need flow)
@@ -393,11 +395,13 @@ them has a score of %1 for the target ship, the confidence will be 1.
   ^-  @rs
   %+  roll
     %+  turn
-      ~(val by counts)
-    |=  [n=@ud p=@ud]
+      ~(tap by counts)
+    |=  [=ship [pos=@ud neg=@ud]]
+    %+  mul:rs
+      ?:(=(our.bowl ship) .1 .0.5)
     %+  add:rs 
-      (mul:rs .-1.0 (sun:rs n))
-    (sun:rs p)
+      (mul:rs .-1.0 (sun:rs neg))
+    (sun:rs pos)
   add:rs
 ::
 ++  pos-reacts  (silt `(list knot)`~[':+1:' ':heart:' ':heart_eyes:' ':clap:' ':100:' ':tada:'])

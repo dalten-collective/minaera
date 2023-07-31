@@ -26,8 +26,6 @@
 [%pass /minaera/action %agent [ship %minaera] %poke %aera-action !>([%init-table %groups %alfie])]
 ::
 ::
-::++  pos-reacts  (silt `(list knot)`~[':+1:' ':heart:' ':heart_eyes:' ':clap:' ':100:' ':tada:'])
-::++  neg-reacts  (silt `(list knot)`~[':-1:' ':'])
 ::  boilerplate
 ::
 +$  card  card:agent:gall

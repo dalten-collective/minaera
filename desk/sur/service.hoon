@@ -2,8 +2,17 @@
 |%
 ++  name  %service
 +$  rock  (map @p @)
-+$  wave  [=ship val=@]
++$  wave  
+  $%  [%add =ship val=@]
+      [%del =ship]
+  ==
 ++  wash
   |=  [=rock =wave]
-  (~(put by rock) ship.wave val.wave)
+  ?-    -.wave 
+      %add
+    (~(put by rock) ship.wave val.wave)
+  ::
+      %del
+    (~(del by rock) ship.wave)
+  ==
 --
