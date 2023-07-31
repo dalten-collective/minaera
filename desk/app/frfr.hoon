@@ -6,19 +6,21 @@
 ::  
 ::  Description of Score:
 :: 
-::  The score is: confidence*sum(feels)
+::  The score is: confidence(%beer)*sum(feels)
 ::  
 ::  The confidence comes from %beer while the sum of feels is the positive
 ::  reacts minus the number of negative reacts collected by %alfie.
 ::
-::  The confidence is set to 1 if the %beer score is %1. It is 1/2 if 
-::  the beer score is %0 or neither you nor your neighbors have a score 
-::  for a given ship.
+::  The confidence is set to 1 if the %beer score is %1. It is 3/4 
+::  if neither you nor your neighbors have a score for a given ship.
+::  It is 1/2 if your %beer score is %0 or one of your neighbors has 
+::  given the ship a beer score of %0.
 ::
-::  If there is a first hand opinion of the person, then my personal %beer score will
-::  be used to calculate the confidence. If I don't have a first hand opinion, then I will 
-::  poll my trusted peers and if at least one of them has a score of %1 for the target ship,
-::  the confidence will be 1.
+::  If there is a first hand opinion of the person, then my personal 
+::  %beer score will be used to calculate the confidence. If I don't 
+::  have a first hand opinion, then I will poll my trusted peers and 
+::  take the max of their score. If none of my peers has a first hand
+::  opinion of the ship, the confidence will be 1/2.
 ::
 ::  .^((set @p) %gx /(scot %p our)/pals/(scot %da now)/mutuals/noun)
 ::
@@ -28,7 +30,17 @@
 ::
 +$  versioned-state  $%(state-0)
 ::
-+$  state-0  [%0 neighbors=(set @p) scores=(map @p @rs)]
++$  score
+  $:  score=@rs 
+      beer=[from=(unit @p) weight=@rs]
+      alfie=(map @p [pos=@ud neg=@ud])
+  ==
+::
++$  state-0
+  $:  %0
+      neighbors=(set @p)
+      scores=(map @p score)
+  ==
 ::
 +$  frfr-action
   $%  [%compute =ship]
@@ -53,10 +65,10 @@ The confidence is set to 1 if the %beer score is %1. It is 1/2 if
 the beer score is %0 or neither you nor your neighbors have a score 
 for a given ship.
 
-If there is a first hand opinion of the person, then my personal %beer score will
-be used to calculate the confidence. If I don't have a first hand opinion, then I will 
-poll my trusted peers and if at least one of them has a score of %1 for the target ship,
-the confidence will be 1.
+If there is a first hand opinion of the person, then my personal %beer 
+score will be used to calculate the confidence. If I don't have a first
+hand opinion, then I will poll my trusted peers and if at least one of
+them has a score of %1 for the target ship, the confidence will be 1.
 '''
 :*  desc=desc
     type=%continuous
@@ -65,6 +77,33 @@ the confidence will be 1.
     max=%inf
 ==
 ::
+++  pass-surf
+  |=  [me=@p ship=@p]
+  ^-  (list card)
+  :~  :*  %pass  /service/beer
+          %agent  [me %frfr]
+          %poke  %surf-service  !>([ship [%service %beer ~]])
+      ==
+  ::
+      :*  %pass  /feed/minaera/groups/alfie
+          %agent  [me %frfr]
+          %poke  %surf-feed  !>([ship [%feed %minaera %groups %alfie ~]])
+      ==
+  ==
+::
+++  quit-surf
+  |=  [me=@p ship=@p]
+  ^-  (list card)
+  :~  :*  %pass  /service/beer
+          %agent  [me %frfr]
+          %poke  %surf-service  !>([ship [%service %beer ~]])
+      ==
+  ::
+      :*  %pass  /feed/minaera/groups/alfie
+          %agent  [me %frfr]
+          %poke  %surf-feed  !>([ship [%feed %minaera %groups %alfie ~]])
+      ==
+  ==
 --
 =/  sub-feed  (mk-subs feed ,[%feed %minaera @ @ ~])
 =/  sub-service  (mk-subs service ,[%service *])
@@ -108,17 +147,9 @@ the confidence will be 1.
   ^-  (list card)
   %-  zing
   %+  turn
-    ~(tap in neighbors.state)
+    (snoc ~(tap in neighbors.state) our.bowl)
   |=  a=@p
-  :~  :*  %pass  /service/beer
-          %agent  [our.bowl %frfr]
-          %poke  %surf-service  !>([our.bowl [%service %beer ~]])
-      ==  
-      :*  %pass  /feed/minaera/groups/alfie
-          %agent  [our.bowl %frfr]
-          %poke  %surf-feed  !>([our.bowl [%feed %minaera %groups %alfie ~]])
-      ==
-  ==
+  (pass-surf our.bowl a)
 ::
 ++  on-save
   ^-  vase
@@ -148,14 +179,28 @@ the confidence will be 1.
     =/  act  !<(frfr-action vase)
     ?+    -.act  !!
         %compute
-      =/  confidence  (compute-weight:hc ship.act neighbors.state)
-      =/  sum=(unit @rs)  (get-sum our.bowl ship.act)
+      =/  confidence=(unit [from=@p weight=@rs])
+        (compute-weight:hc ship.act neighbors.state)
+      =/  sum  (get-sum-neighbors our.bowl ship.act neighbors.state)
       ?~  sum
-        `this
-      `this(scores.state (~(put by scores.state) ship.act (mul:rs confidence (need sum))))
+        ~|('%frfr: No information on {<ship.act>} available in your graph' `this)
+      =/  con=[from=(unit @p) weight=@rs]
+        ?~  confidence 
+          [~ .0.75]
+        [`from weight]:(need confidence) 
+      :-  ~
+      %=    this
+          scores.state
+        %+  ~(put by scores.state)
+          ship.act 
+        :+  (mul:rs weight.con (calc-sum (need sum)))
+          con
+        (need sum)
+      ==
     ::
         %add-edge
-      `this(neighbors.state (~(put in neighbors.state) ship.act))
+      :-  (pass-surf our.bowl ship.act)
+      this(neighbors.state (~(put in neighbors.state) ship.act))
     ::
         %del-edge
       `this(neighbors.state (~(del in neighbors.state) ship.act))
@@ -204,7 +249,7 @@ the confidence will be 1.
   ?+    path  `~
       [%x %score @ ~]
     =/  =ship  (slav %p -.+.+.path)
-    `~
+    ``[%noun !>((~(get by scores.state) ship))]
   ::
       [%x %card ~]
     ``[%noun !>(info-card)]
@@ -250,30 +295,35 @@ the confidence will be 1.
 |_  =bowl:gall
 ++  compute-weight
   |=  [ship=@p neighbors=(set @p)]
-  ^-  @rs
+  ^-  (unit [from=@p weight=@rs])
   ::  Try grabbing local weight first
   ::
   =/  local-weight  (get-weights our.bowl ship)
-  ?^  local-weight
-    (need local-weight)
-  ::  If local-weight is ~, ask your peers
+  ::  If local-weight is .0, ask your peers
   ::
-  =/  max
-    =<  -
+  ?.  =(.0 +.local-weight)
+    local-weight
+  =/  b=(list [@p @rs])
     %+  sort
+      ^-  (list [@p @rs])
+      %-  neede
       %+  turn
         ~(tap in neighbors)
       |=  e=@p
-      =+  (get-weights e ship)
-      ?~  -
-        ~
-      (need -)
-    gth
-  ?~(max .0.5 max)
+      (get-weights our.bowl e)
+    |=  [a=[* weight=@rs] b=[* weight=@rs]]
+    (gth weight.a weight.b)
+  ?~(b ~ `i.b)
+::
+++  neede
+  |*  a=(list (unit))
+  |-
+  ?~  a  ~
+  ?:(!=(~ i.a) [(need i.a) $(a t.a)] $(a t.a))
 ::
 ++  get-weights
   |=  [host=ship target=ship]
-  ^-  (unit @rs)
+  ^-  (unit [@p @rs])
   =+  (grab-scores-beer host)
   ?~  -
     ~
@@ -281,12 +331,12 @@ the confidence will be 1.
   ?.  (~(has by scores) target)
     ~
   ?:  =(%0 (~(got by scores) target))
-    `.0.5
-  `.1
+    `[host .0.5]
+  `[host .1]
 ::
 ++  grab-scores-beer
   |=  =ship
-  ^-  (unit (map @p @))
+  ^-  (unit (map @p @rs))
   =/  local-map  (~(get by +.sub-service) [ship %beer [%service %beer ~]]) 
   ?~  local-map
     ~|('%frfr: subscription to %beer has not been initialized yet' ~) 
@@ -295,28 +345,60 @@ the confidence will be 1.
     ~
   `rock:(need flow) 
 ::
+++  get-sum-neighbors
+  |=  [host=ship target=ship neighbors=(set @p)]
+  ^-  (unit map=(map @p [pozz=@ud negs=@ud]))
+  =/  tables=(list [@p table:n])
+    %-  neede
+    %+  turn
+      (snoc ~(tap in neighbors) host)
+    |=  a=@p
+    =+  (grab-table-alfie a)
+    ?~  -
+      ~
+    `[a (need -)]
+  =/  counts=(map @p [pozz=@ud negs=@ud])
+  =<  +
+  %^    spin
+      tables
+    *(map @p [pozz=@ud negs=@ud])
+  |=  [a=[ship=@p =table:n] counts=(map @p [pozz=@ud negs=@ud])]
+  =/  pozz  
+    %-  lent
+    (~(get-rows tab:n (~(select tab:n table.a) ~ (pos-cond target))) ~)
+  =/  negs
+    %-  lent
+    (~(get-rows tab:n (~(select tab:n table.a) ~ (neg-cond target))) ~)
+  [a (~(put by counts) ship.a [pozz=pozz negs=negs])]
+ ::
+  ?~  counts
+    ~
+  `counts
+::
 ++  grab-table-alfie
   |=  =ship
-  =/  local-map  (~(get by +.sub-feed) [ship %minaera [%feed %minaera %groups %alfie ~]]) 
+  ^-  (unit table:n)
+  =/  local-map  
+    %-  ~(get by +.sub-feed)
+    [ship %minaera [%feed %minaera %groups %alfie ~]]
   ?~  local-map
     ~|('%frfr: %alfie has not been initialized yet' ~) 
   =/  flow=(unit [aeon=@ stale=_| fail=_| =rock:feed])  (need local-map)
   ?~  flow
     ~
-  `rock:(need flow) 
+  `rock:(need flow)
 ::
-++  get-sum
-  |=  [host=ship target=ship]
-  ^-  (unit @rs)
-  =+  (grab-table-alfie host)
-  ?~  -
-    ~
-  =/  =table:n  (need -) 
-  =/  pozz  (~(get-rows tab:n (~(select tab:n table) ~ (pos-cond target))) ~)
-  ~&  pozz+pozz
-  =/  negs  (~(get-rows tab:n (~(select tab:n table) ~ (neg-cond target))) ~)
-  ~&  negs+negs
-  `(add:rs (mul:rs .-1.0 (sun:rs (lent negs))) (sun:rs (lent pozz)))
+++  calc-sum
+  |=  counts=(map @p [@ud @ud])
+  ^-  @rs
+  %+  roll
+    %+  turn
+      ~(val by counts)
+    |=  [n=@ud p=@ud]
+    %+  add:rs 
+      (mul:rs .-1.0 (sun:rs n))
+    (sun:rs p)
+  add:rs
 ::
 ++  pos-reacts  (silt `(list knot)`~[':+1:' ':heart:' ':heart_eyes:' ':clap:' ':100:' ':tada:'])
 ::
