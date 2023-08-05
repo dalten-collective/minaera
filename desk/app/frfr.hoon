@@ -177,7 +177,9 @@ my peers attests that the ship is definitely fake (%0) the confidence goes to 0.
 ++  on-init
   ^-  (quip card _this)
   ~>  %bout.[0 '%frfr +on-init']
-  =.  neighbors.state  .^((set @p) %gx /(scot %p our.bowl)/pals/(scot %da now.bowl)/mutuals/noun)
+  =.  neighbors.state  ?.  .^(? %gu /=pals=/$)
+                         *(set @p)
+                       .^((set @p) %gx /=pals=/mutuals/noun)
   :_  this
   ^-  (list card)
   %-  zing
