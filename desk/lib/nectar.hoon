@@ -559,7 +559,7 @@
     ~&  >  rows
     ::  ~>  %bout
     =.  records.table
-      %-  ~(rut by records.table)
+      %-  ~(urn by records.table)
       |=  [name=(list term) =record]
       =/  =key-type  (~(got by indices.table) name)
       =/  lis=(list [=key =row])
